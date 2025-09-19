@@ -26,7 +26,8 @@
 		"vscodeTypes.ts",
 		"src",
 		"test",
-		".vscode/extensions/test-extension"
+		".vscode/extensions/test-extension",
+		"myscenarios"
 	],
 	"exclude": [
 		"test/scenarios/**/*",

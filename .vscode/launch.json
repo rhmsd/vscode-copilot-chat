@@ -2,6 +2,30 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
+			"name": "CSharp-Build-Fix",
+			"internalConsoleOptions": "openOnSessionStart",
+			"runtimeExecutable": "npm",
+			"args": [
+				"run",
+				"simulate",
+				"--",
+				"--verbose",
+				"-n=1",
+				"-p=1",
+				"--sidebar",
+				"--model=claude-sonnet-4",
+				"--scenario-test=csharp-build-fix.stest",
+				"--external-scenarios=${workspaceFolder}/myscenarios",
+				"--output=${workspaceFolder}/test/out/"
+
+			],
+			"request": "launch",
+			"type": "node",
+			"presentation": {
+				"group": "1_launch"
+			}
+		},
+		{
 			"type": "extensionHost",
 			"request": "launch",
 			"name": "Launch Copilot Extension",

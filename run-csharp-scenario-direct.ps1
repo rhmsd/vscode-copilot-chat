@@ -1,0 +1,1 @@
+node dist/simulationMain.js --verbose --sidebar --model claude-sonnet-4 -n 1 --external-scenarios .\myscenarios\fix-build --output ./test-terminal-output --skip-model-cache

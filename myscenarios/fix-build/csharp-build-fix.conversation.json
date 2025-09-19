@@ -1,0 +1,24 @@
+[
+	{
+		"question": "@agent I have a C# project in the workspace that has compilation errors. Please help me fix them by following this process:\n\n1. **IMPORTANT**: Use the terminal to run 'dotnet build' command first to see what compilation errors we have\n2. Carefully read and analyze the error messages from the terminal output\n3. Fix the errors in the source code files\n4. Build again using the terminal to verify the fixes work\n5. Repeat steps 2-4 until the project builds successfully\n\nThe project should be a simple Hello World application. **You must start by running 'dotnet build' in the terminal using the run_in_terminal tool. Do not use other error-checking tools first.** Please execute the build command now and let me know what errors you find.",
+		"stateFile": "workspaceState.state.json",
+		"expectedToolCalls": "run_in_terminal",
+		"toolInputValues": {
+			"command": {
+				"allOf": [
+					"dotnet build"
+				]
+			},
+			"isBackground": false
+		},
+		"tools": {
+			"run_in_terminal": true,
+			"get_terminal_output": true,
+			"read_file": true,
+			"replace_string_in_file": true,
+			"list_dir": true,
+			"file_search": true,
+			"get_errors": false
+		}
+	}
+]

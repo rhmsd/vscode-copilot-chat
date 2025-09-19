@@ -1,0 +1,60 @@
+FROM node:22-bookworm
+
+# Avoid interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies and .NET SDK
+RUN apt-get update && apt-get install -y \
+    git \
+    python3 \
+    python3-pip \
+    build-essential \
+    xvfb \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install .NET SDK 8.0
+RUN wget https://packages.microsoft.com/config/debian/11/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \
+    && dpkg -i packages-microsoft-prod.deb \
+    && rm packages-microsoft-prod.deb \
+    && apt-get update \
+    && apt-get install -y dotnet-sdk-8.0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /workspace
+
+# Copy pre-built simulation files and required config
+COPY dist/ ./dist/
+COPY package.json ./package.json
+COPY package-lock.json ./package-lock.json
+COPY .vscode-test.mjs ./.vscode-test.mjs
+
+# Copy script directory and src directory for postinstall script
+COPY script/ ./script/
+COPY src/ ./src/
+
+# Copy test directory with cache files and requirements (needed for postinstall)
+COPY test/ ./test/
+
+# Install all dependencies (including dev dependencies needed for simulation)
+RUN npm ci --legacy-peer-deps
+
+# Install Playwright browser binaries
+RUN npx playwright install --with-deps chromium
+
+# Copy custom scenarios directory
+COPY myscenarios/ ./myscenarios/
+
+# Install Python dependencies for simulation
+RUN pip3 install --break-system-packages -r test/requirements.txt
+
+# Set environment variables
+ENV NODE_ENV=test
+ENV DISPLAY=:99
+
+# Create output directory
+RUN mkdir -p /workspace/simulation-output
+
+# Default command to run simulations
+CMD ["node", "dist/simulationMain.js"]

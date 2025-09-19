@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  simulation:
+    build:
+      context: .
+      dockerfile: Dockerfile.simulation
+    volumes:
+      # Mount output directory to host
+      - ./simulation-output:/workspace/simulation-output
+      # Mount cache directory for better performance
+      - simulation-cache:/workspace/.simulation
+      # Optional: mount source code for development
+      # - .:/workspace
+    environment:
+      - NODE_ENV=test
+      - SIMULATION_OUTPUT_DIR=/workspace/simulation-output
+      # GitHub authentication (choose one method)
+      - GITHUB_OAUTH_TOKEN=${GITHUB_OAUTH_TOKEN}
+      # - GITHUB_PAT=${GITHUB_PAT}
+      # Additional API keys if using other models
+      # - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    command: >
+      bash -c "
+        # Start virtual display for any GUI components
+        Xvfb :99 -screen 0 1024x768x24 &
+        # Run the simulation
+        npm run simulate -- --output /workspace/simulation-output
+      "
+    # For interactive debugging
+    stdin_open: true
+    tty: true
+
+  # Alternative service for specific test scenarios
+  simulation-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.simulation
+    volumes:
+      - ./simulation-output:/workspace/simulation-output
+      - simulation-cache:/workspace/.simulation
+    environment:
+      - NODE_ENV=test
+      # GitHub authentication (choose one method)
+      - GITHUB_OAUTH_TOKEN=${GITHUB_OAUTH_TOKEN}
+      # - GITHUB_PAT=${GITHUB_PAT}
+    command: >
+      bash -c "
+        Xvfb :99 -screen 0 1024x768x24 &
+        node dist/simulationMain.js --verbose -n=1 -p=1 --scenario-test=toolcall.stest --output /workspace/simulation-output
+      "
+
+  # C# Build Fix scenario service
+  csharp-scenario:
+    build:
+      context: .
+      dockerfile: Dockerfile.simulation
+    volumes:
+      - ./simulation-output-csharp:/workspace/output
+      - ./myscenarios:/workspace/myscenarios
+      - simulation-cache:/workspace/.simulation
+    environment:
+      - NODE_ENV=test
+      # GitHub authentication (choose one method)
+      - GITHUB_OAUTH_TOKEN=${GITHUB_OAUTH_TOKEN}
+      # - GITHUB_PAT=${GITHUB_PAT}
+    command: >
+      bash -c "
+        # Verify .NET SDK is available
+        dotnet --version
+        echo 'Starting C# build fix scenario...'
+
+        # Start virtual display
+        Xvfb :99 -screen 0 1024x768x24 &
+
+        # Run the C# build fix scenario
+        node dist/simulationMain.js --verbose \
+          --sidebar \
+          --external-scenarios ./myscenarios/fix-build \
+          --output /workspace/output
+      "
+
+volumes:
+  simulation-cache:

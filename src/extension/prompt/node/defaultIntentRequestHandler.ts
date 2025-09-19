@@ -40,8 +40,9 @@ import { UnknownIntent } from '../../intents/node/unknownIntent';
 import { ResponseStreamWithLinkification } from '../../linkify/common/responseStreamWithLinkification';
 import { SummarizedConversationHistoryMetadata } from '../../prompts/node/agent/summarizedConversationHistory';
 import { normalizeToolSchema } from '../../tools/common/toolSchemaNormalizer';
-import { ToolCallCancelledError } from '../../tools/common/toolsService';
+import { IToolsService, ToolCallCancelledError } from '../../tools/common/toolsService';
 import { IToolGrouping, IToolGroupingService } from '../../tools/common/virtualTools/virtualToolTypes';
+import { ChatVariablesCollection } from '../common/chatVariablesCollection';
 import { Conversation, getUniqueReferences, GlobalContextMessageMetadata, IResultMetadata, RenderedUserMessageMetadata, RequestDebugInformation, ResponseStreamParticipant, Turn, TurnStatus } from '../common/conversation';
 import { IBuildPromptContext, IToolCallRound } from '../common/intents';
 import { ChatTelemetry, ChatTelemetryBuilder } from './chatParticipantTelemetry';
@@ -49,7 +50,6 @@ import { IntentInvocationMetadata } from './conversation';
 import { IDocumentContext } from './documentContext';
 import { IBuildPromptResult, IIntent, IIntentInvocation, IResponseProcessor } from './intents';
 import { ConversationalBaseTelemetryData, createTelemetryWithId, sendModelMessageTelemetry } from './telemetry';
-import { ChatVariablesCollection } from '../common/chatVariablesCollection';
 
 export interface IDefaultIntentRequestHandlerOptions {
 	maxToolCallIterations: number;
@@ -523,6 +523,7 @@ class DefaultToolCallingLoop extends ToolCallingLoop<IDefaultToolLoopOptions> {
 		@IToolGroupingService private readonly toolGroupingService: IToolGroupingService,
 		@IExperimentationService private readonly _experimentationService: IExperimentationService,
 		@ICopilotTokenStore private readonly _copilotTokenStore: ICopilotTokenStore,
+		@IToolsService private readonly toolsService: IToolsService,
 	) {
 		super(options, instantiationService, endpointProvider, logService, requestLogger, authenticationChatUpgradeService, telemetryService);
 
@@ -708,7 +709,21 @@ class DefaultToolCallingLoop extends ToolCallingLoop<IDefaultToolLoopOptions> {
 	}
 
 	protected override async getAvailableTools(outputStream: ChatResponseStream | undefined, token: CancellationToken): Promise<LanguageModelToolInformation[]> {
-		const tools = await this.options.invocation.getAvailableTools?.() ?? [];
+		console.log(`[INTENT-DEBUG] getAvailableTools called, this.options.invocation:`, typeof this.options.invocation);
+		console.log(`[INTENT-DEBUG] this.options.invocation.getAvailableTools:`, typeof this.options.invocation.getAvailableTools);
+
+		// Try to get tools from the intent invocation first
+		let tools: LanguageModelToolInformation[] = [];
+		if (this.options.invocation.getAvailableTools) {
+			tools = await this.options.invocation.getAvailableTools() ?? [];
+			console.log(`[INTENT-DEBUG] Got ${tools.length} tools from invocation.getAvailableTools`);
+		} else {
+			// Fallback: Use IToolsService.getEnabledTools with the request's tool configuration
+			console.log(`[INTENT-DEBUG] No invocation.getAvailableTools, falling back to toolsService.getEnabledTools`);
+			tools = this.toolsService.getEnabledTools(this.options.request);
+			console.log(`[INTENT-DEBUG] Got ${tools.length} tools from toolsService.getEnabledTools`);
+		}
+
 		if (this.toolGrouping) {
 			this.toolGrouping.tools = tools;
 		} else {

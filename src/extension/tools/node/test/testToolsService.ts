@@ -89,11 +89,16 @@ export class TestToolsService extends BaseToolsService implements IToolsService 
 
 	protected getFilteredTools(disabledTools: Set<string>): readonly ICopilotToolCtor[] {
 		// Checking in a quick fix- needs a better check
-		const isSwebenchContainer = process.env.HOME === '/root';
+		// const isSwebenchContainer = process.env.HOME === '/root';
+		// const filteredTools = ToolRegistry.getTools()
+		// 	.filter(t => !disabledTools.has(t.toolName))
+		// 	.filter(t => !TestToolsService.ExcludedTools.includes(t.toolName))
+		// 	.filter(t => isSwebenchContainer || !TestToolsService.ContainerOnlyTools.includes(t.toolName));
+
+		// return filteredTools;
+
 		const filteredTools = ToolRegistry.getTools()
-			.filter(t => !disabledTools.has(t.toolName))
-			.filter(t => !TestToolsService.ExcludedTools.includes(t.toolName))
-			.filter(t => isSwebenchContainer || !TestToolsService.ContainerOnlyTools.includes(t.toolName));
+			.filter(t => !disabledTools.has(t.toolName));
 
 		return filteredTools;
 	}

@@ -60,3 +60,4 @@ import './simulation/slash-test/testGen.py.stest';
 import './simulation/slash-test/testGen.ts.stest';
 import './simulation/tools/toolcall.stest';
 
+import '../myscenarios/fix-build/csharp-build-fix.stest';
