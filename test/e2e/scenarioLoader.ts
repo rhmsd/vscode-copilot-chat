@@ -79,6 +79,7 @@ export function fetchConversationScenarios(scenarioFolderPath: string): Scenario
 				scenarioFolderPath,
 				stateFile: testCase.stateFile,
 				applyChatCodeBlocks: testCase.applyChatCodeBlocks,
+				tools: testCase.tools,
 				getState: testCase.stateFile
 					? () => deserializeWorkbenchState(scenarioFolderPath, path.join(scenarioFolderPath, testCase.stateFile))
 					: undefined,
